@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -186,12 +187,12 @@ public class LoginActivity extends AppCompatActivity {
 
         //Collect de données grace au lien uri
         Uri uri = getIntent().getData();
+
         //Si l'uri n'est pas nul on va attraper le code redonné par l'uri
         if(uri != null && uri.toString().startsWith(API_OAUTH_REDIRECT)) {
             String code = uri.getQueryParameter("code");
             if(code != null) {
                 // TODO We can probably do something with this code! Show the user that we are logging them in
-
                 final SharedPreferences prefs = this.getSharedPreferences(
                         BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE);
                 //Nous appelons l'intercepteur (ServiceGenerator) qui va communiquer avec le serveur
@@ -222,6 +223,12 @@ public class LoginActivity extends AppCompatActivity {
                             final String headertoken = " " + String.valueOf(token.getTokenType()) + " " + String.valueOf(token.getAccessToken());
                             // TODO Show the user they are logged in
 
+                            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("fitbit", 0);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString("fitbit_headertoken", headertoken);
+                            editor.putString("fitbit_userid", token.getUser_ID());
+                            editor.commit();
+
                             //ActivitiesCall
                             final GetResquest clientg = ServiceGenerator.createService(GetResquest.class);
 
@@ -237,7 +244,7 @@ public class LoginActivity extends AppCompatActivity {
 
                                 @Override
                                 public void onResponse(Call<Activities> call, Response<Activities> response) {
-                                    activities =response.body();
+                                    activities = response.body();
                                     String usId = String.valueOf(token.getUser_ID());
                                     String oauthHeader = headertoken +"²"+ usId;
                                     String steps = String.valueOf(activities.getSummary().getSteps());
@@ -253,34 +260,6 @@ public class LoginActivity extends AppCompatActivity {
                                 }
                             });
 
-                         /*   mDateSetListener = new DatePickerDialog.OnDateSetListener() {
-
-                                @Override
-                                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
-
-                                    month = month + 1;
-                                    Log.d(TAG, "onDateSet: mm/dd/yyy: " + month + "/" + day + "/" + year);
-
-                                    String date = year + "-" + month + "-" + day;
-                                    chosenDate.setText(date);
-
-                                    final Call<Activities>calld = clientg.getActivitiesData(map,token.getUser_ID(),String.valueOf(date));
-                                    calld.enqueue(new Callback<Activities>() {
-                                        @Override
-                                        public void onResponse(Call<Activities> call, Response<Activities> response) {
-                                            Activities activities =response.body();
-                                            textView.setText(String.valueOf(activities.getSummary().getSteps()));
-                                        }
-
-                                        @Override
-                                        public void onFailure(Call<Activities> call, Throwable t) {
-
-                                        }
-                                    });
-
-                                }
-
-                            };*/
 
                         } else {
                             // TODO Handle a missing code in the redirect URI
@@ -294,6 +273,37 @@ public class LoginActivity extends AppCompatActivity {
 
                 });
             }
+        }
+
+        if(uri == null)
+        {
+            SharedPreferences settings = getApplicationContext().getSharedPreferences("fitbit", 0);
+            String headertoken = settings.getString("fitbit_headertoken", "null");
+            String user_id = settings.getString("fitbit_userid", "null");
+
+            //ActivitiesCall
+            final GetResquest clientg = ServiceGenerator.createService(GetResquest.class);
+
+            final Map<String, String> map = new HashMap<>();
+
+            map.put("Authorization", headertoken);
+            // Toast.makeText(LoginActivity.this, String.valueOf(map), Toast.LENGTH_SHORT).show();
+
+
+            final Call<Activities> callg = clientg.getActivitiesData(map,user_id,dateFirst);
+            callg.enqueue(new Callback<Activities>() {
+
+
+                @Override
+                public void onResponse(Call<Activities> call, Response<Activities> response) {
+                    activities = response.body();
+                }
+
+                @Override
+                public void onFailure(Call<Activities> call, Throwable t) {
+
+                }
+            });
         }
 
         if (auth.getCurrentUser() != null) {
