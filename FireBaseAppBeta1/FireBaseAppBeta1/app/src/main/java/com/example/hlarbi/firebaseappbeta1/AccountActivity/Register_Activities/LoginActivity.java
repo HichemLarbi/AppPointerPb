@@ -75,8 +75,9 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "#################### on create");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+//        setContentView(R.layout.activity_login);
         final Context cxt = this;
         //Get Firebase auth instance
         auth = FirebaseAuth.getInstance();
@@ -181,16 +182,20 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        Log.d(TAG, "#################### on resume");
         super.onResume();
         String base2 = Credentials.basic(client_id, client_secret).substring(6);
+        Log.d(TAG,"base2 = "+ base2);
 
 
         //Collect de données grace au lien uri
         Uri uri = getIntent().getData();
+        Log.d(TAG, "uri = "+ uri);
 
         //Si l'uri n'est pas nul on va attraper le code redonné par l'uri
         if(uri != null && uri.toString().startsWith(API_OAUTH_REDIRECT)) {
             String code = uri.getQueryParameter("code");
+            Log.d(TAG, "code = "+ code);
             if(code != null) {
                 // TODO We can probably do something with this code! Show the user that we are logging them in
                 final SharedPreferences prefs = this.getSharedPreferences(
@@ -222,6 +227,9 @@ public class LoginActivity extends AppCompatActivity {
 
                             final String headertoken = " " + String.valueOf(token.getTokenType()) + " " + String.valueOf(token.getAccessToken());
                             // TODO Show the user they are logged in
+                            Log.d(TAG, "headertoken = " + headertoken);
+
+                            Log.d(TAG, "userid = " + token.getUser_ID());
 
                             SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("fitbit", 0);
                             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -280,6 +288,9 @@ public class LoginActivity extends AppCompatActivity {
             SharedPreferences settings = getApplicationContext().getSharedPreferences("fitbit", 0);
             String headertoken = settings.getString("fitbit_headertoken", "null");
             String user_id = settings.getString("fitbit_userid", "null");
+
+            Log.d(TAG, "saved headertoken = " + headertoken );
+            Log.d(TAG, "saved user_id = " + user_id);
 
             //ActivitiesCall
             final GetResquest clientg = ServiceGenerator.createService(GetResquest.class);
